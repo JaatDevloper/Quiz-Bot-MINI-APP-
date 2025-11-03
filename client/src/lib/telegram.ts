@@ -45,6 +45,7 @@ interface TelegramWebApp {
     notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
     selectionChanged: () => void;
   };
+  showAlert?: (message: string) => void;
 }
 
 declare global {
@@ -70,32 +71,27 @@ export const telegram = {
   isReady: !!tg,
 };
 
-// ✅ Automatically initialize Telegram WebApp
+// ✅ Automatically initialize Telegram WebApp if available
 if (telegram.isReady) {
   telegram.ready();
   telegram.expand();
 }
 
-// ✅ Export helper to get Telegram user easily
+// ✅ Helper: Get Telegram user safely
 export const getTelegramUser = () => telegram?.user;
 
-// ✅ Export haptic feedback helper (prevents crashes outside Telegram)
-export const hapticFeedback = {
-  impactOccurred: (type: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' = 'light') => {
-    if (tg?.HapticFeedback) {
-      tg.HapticFeedback.impactOccurred(type);
-    } else {
-      console.warn('HapticFeedback API not available');
-    }
-  },
-  notificationOccurred: (type: 'error' | 'success' | 'warning') => {
-    if (tg?.HapticFeedback) {
-      tg.HapticFeedback.notificationOccurred(type);
-    }
-  },
-  selectionChanged: () => {
-    if (tg?.HapticFeedback) {
-      tg.HapticFeedback.selectionChanged();
-    }
-  },
+// ✅ Helper: Trigger haptic feedback safely
+export const hapticFeedback = (type: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' = 'light') => {
+  if (telegram.isReady) {
+    telegram.HapticFeedback?.impactOccurred(type);
+  }
+};
+
+// ✅ Helper: Show alert (Telegram or browser fallback)
+export const showAlert = (message: string) => {
+  if (telegram.isReady && tg?.showAlert) {
+    tg.showAlert(message);
+  } else {
+    alert(message);
+  }
 };
