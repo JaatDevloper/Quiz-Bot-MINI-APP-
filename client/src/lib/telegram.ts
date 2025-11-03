@@ -70,7 +70,7 @@ export const telegram = {
   isReady: !!tg,
 };
 
-// ✅ Automatically prepare Telegram WebApp when ready
+// ✅ Automatically initialize Telegram WebApp
 if (telegram.isReady) {
   telegram.ready();
   telegram.expand();
@@ -78,3 +78,24 @@ if (telegram.isReady) {
 
 // ✅ Export helper to get Telegram user easily
 export const getTelegramUser = () => telegram?.user;
+
+// ✅ Export haptic feedback helper (prevents crashes outside Telegram)
+export const hapticFeedback = {
+  impactOccurred: (type: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' = 'light') => {
+    if (tg?.HapticFeedback) {
+      tg.HapticFeedback.impactOccurred(type);
+    } else {
+      console.warn('HapticFeedback API not available');
+    }
+  },
+  notificationOccurred: (type: 'error' | 'success' | 'warning') => {
+    if (tg?.HapticFeedback) {
+      tg.HapticFeedback.notificationOccurred(type);
+    }
+  },
+  selectionChanged: () => {
+    if (tg?.HapticFeedback) {
+      tg.HapticFeedback.selectionChanged();
+    }
+  },
+};
