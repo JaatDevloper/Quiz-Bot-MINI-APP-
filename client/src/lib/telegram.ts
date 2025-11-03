@@ -2,7 +2,7 @@ interface TelegramWebApp {
   ready: () => void;
   expand: () => void;
   close: () => void;
-  colorScheme: 'light' | 'dark';
+  colorScheme: "light" | "dark";
   themeParams: {
     bg_color?: string;
     text_color?: string;
@@ -42,10 +42,14 @@ interface TelegramWebApp {
     offClick: (callback: () => void) => void;
   };
   HapticFeedback: {
-    impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
-    notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
+    impactOccurred: (
+      style: "light" | "medium" | "heavy" | "rigid" | "soft"
+    ) => void;
+    notificationOccurred: (type: "error" | "success" | "warning") => void;
     selectionChanged: () => void;
   };
+  showAlert?: (message: string, callback?: () => void) => void;
+  showConfirm?: (message: string, callback?: (confirmed: boolean) => void) => void;
 }
 
 declare global {
@@ -62,7 +66,7 @@ export const telegram = {
   ready: () => tg?.ready(),
   expand: () => tg?.expand(),
   close: () => tg?.close(),
-  colorScheme: tg?.colorScheme || 'light',
+  colorScheme: tg?.colorScheme || "light",
   themeParams: tg?.themeParams || {},
   user: tg?.initDataUnsafe?.user,
   MainButton: tg?.MainButton,
@@ -71,39 +75,63 @@ export const telegram = {
   isReady: !!tg,
 };
 
-// ✅ Added: Initialization helper for Telegram Mini App
+// ✅ Initialize Telegram App safely
 export const initTelegramApp = () => {
-  if (!tg) {
-    console.warn("Telegram WebApp not detected — running in web mode.");
-    return;
-  }
-
-  tg.ready();
-  tg.expand();
-
-  console.log("✅ Telegram Mini App initialized successfully");
+  if (!telegram.isReady) return;
+  telegram.ready();
+  telegram.expand();
 };
 
-// ✅ Added: showConfirm popup
-export const showConfirm = (message: string, onConfirm?: () => void) => {
-  if (window.confirm(message)) {
-    if (onConfirm) onConfirm();
-  }
-};
-
-// ✅ Existing helper functions
+// ✅ Get Telegram user (used by Header.tsx, WelcomeCard.tsx)
 export const getTelegramUser = () => {
   return telegram.user;
 };
 
+// ✅ Haptic feedback (used by QuizCard, BottomNav, etc.)
 export const hapticFeedback = (
-  type: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' | 'success' | 'warning' | 'error' = 'light'
+  type:
+    | "light"
+    | "medium"
+    | "heavy"
+    | "rigid"
+    | "soft"
+    | "success"
+    | "warning"
+    | "error" = "light"
 ) => {
   if (!telegram.HapticFeedback) return;
 
-  if (type === 'success' || type === 'warning' || type === 'error') {
+  if (type === "success" || type === "warning" || type === "error") {
     telegram.HapticFeedback.notificationOccurred(type);
   } else {
     telegram.HapticFeedback.impactOccurred(type);
   }
 };
+
+// ✅ Native Telegram-style alert (fallback to browser alert)
+export const showAlert = (message: string) => {
+  if (tg?.showAlert) {
+    tg.showAlert(message);
+  } else {
+    alert(message);
+  }
+};
+
+// ✅ Confirmation popup
+export const showConfirm = (message: string, onConfirm?: () => void) => {
+  if (tg?.showConfirm) {
+    tg.showConfirm(message, (confirmed) => {
+      if (confirmed && onConfirm) onConfirm();
+    });
+  } else {
+    if (window.confirm(message)) {
+      if (onConfirm) onConfirm();
+    }
+  }
+};
+
+// ✅ Auto ready when available
+if (telegram.isReady) {
+  telegram.ready();
+  telegram.expand();
+}
