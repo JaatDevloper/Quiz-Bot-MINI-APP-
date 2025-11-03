@@ -18,7 +18,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build the frontend (creates /app/dist/index.js and /app/dist/public)
+# Build the frontend
 RUN npm run build
 
 # Production image
@@ -33,13 +33,10 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 # Copy built files
 COPY --from=builder /app/node_modules ./node_modules
-
-# 🟢 CRITICAL FIX: Copy the ENTIRE 'dist' folder.
-# This contains BOTH the compiled backend server (index.js) AND the frontend static assets (public/).
 COPY --from=builder /app/dist ./dist
-
 COPY --from=builder /app/package*.json ./
-# Removed unnecessary copies of source code folders (server and shared)
+COPY --from=builder /app/server ./server
+COPY --from=builder /app/shared ./shared
 
 # Change ownership to nodejs user
 RUN chown -R nodejs:nodejs /app
