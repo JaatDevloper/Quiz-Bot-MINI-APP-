@@ -18,7 +18,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Build the frontend
+# Build the frontend (creates /app/dist/index.js and /app/dist/public)
 RUN npm run build
 
 # Production image
@@ -34,12 +34,12 @@ RUN addgroup --system --gid 1001 nodejs && \
 # Copy built files
 COPY --from=builder /app/node_modules ./node_modules
 
-# 🟢 CRITICAL FIX: The correct path is /app/dist/public, as confirmed by the Vite output in the log.
-COPY --from=builder /app/dist/public ./dist
+# 🟢 CRITICAL FIX: Copy the ENTIRE 'dist' folder.
+# This contains BOTH the compiled backend server (index.js) AND the frontend static assets (public/).
+COPY --from=builder /app/dist ./dist
 
 COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/server ./server
-COPY --from=builder /app/shared ./shared
+# Removed unnecessary copies of source code folders (server and shared)
 
 # Change ownership to nodejs user
 RUN chown -R nodejs:nodejs /app
