@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
-import { log } from "./vite"; // Keeping 'log' statically imported, assuming it's lightweight
+import { log } from "./utils"; // ⬅️ IMPORT CHANGED: Now imports 'log' from the new, clean utility file.
 
 const app = express();
 
@@ -61,11 +61,11 @@ app.use((req, res, next) => {
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
-    // 🟢 FIX: Use dynamic import for dev-only setupVite function
+    // 🟢 Dynamic import for development-only setupVite
     const { setupVite } = await import("./vite");
     await setupVite(app, server);
   } else {
-    // 🟢 FIX: Use dynamic import for production serveStatic function
+    // 🟢 Dynamic import for production serveStatic
     const { serveStatic } = await import("./vite");
     serveStatic(app);
   }
