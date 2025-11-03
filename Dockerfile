@@ -33,7 +33,12 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 # Copy built files
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
+
+# 🚨🚨 CRITICAL FIX HERE: Change the SOURCE path to match your Vite output location 🚨🚨
+# The files are at /app/client/dist/public because of your vite.config.ts root/outDir settings.
+# We copy them to the server's expected static folder: ./dist
+COPY --from=builder /app/client/dist/public ./dist
+
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/shared ./shared
