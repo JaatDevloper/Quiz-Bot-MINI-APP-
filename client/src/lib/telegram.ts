@@ -2,7 +2,6 @@ interface TelegramWebApp {
   ready: () => void;
   expand: () => void;
   close: () => void;
-  showAlert?: (message: string, callback?: () => void) => void;
   colorScheme: 'light' | 'dark';
   themeParams: {
     bg_color?: string;
@@ -69,16 +68,15 @@ export const telegram = {
   MainButton: tg?.MainButton,
   BackButton: tg?.BackButton,
   HapticFeedback: tg?.HapticFeedback,
-  showAlert: tg?.showAlert,
   isReady: !!tg,
 };
 
-// ✅ Get Telegram user
+// ✅ Function to get Telegram user
 export const getTelegramUser = () => {
   return telegram.user;
 };
 
-// ✅ Haptic feedback helper
+// ✅ Function for haptic feedback
 export const hapticFeedback = (
   type: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' | 'success' | 'warning' | 'error' = 'light'
 ) => {
@@ -91,15 +89,15 @@ export const hapticFeedback = (
   }
 };
 
-// ✅ Show alert helper (⚡ this fixes your build error)
-export const showAlert = (message: string) => {
-  if (telegram.showAlert) {
-    telegram.showAlert(message);
-  } else {
-    alert(message);
+// ✅ NEW: Add showConfirm helper for confirmation dialogs
+export const showConfirm = (message: string, onConfirm?: () => void) => {
+  // For Telegram, we could later add custom UI; for now use native confirm()
+  if (window.confirm(message)) {
+    if (onConfirm) onConfirm();
   }
 };
 
+// Initialize Telegram App when ready
 if (telegram.isReady) {
   telegram.ready();
   telegram.expand();
