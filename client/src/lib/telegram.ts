@@ -21,31 +21,9 @@ interface TelegramWebApp {
       photo_url?: string;
     };
   };
-  MainButton: {
-    text: string;
-    color: string;
-    textColor: string;
-    isVisible: boolean;
-    isActive: boolean;
-    show: () => void;
-    hide: () => void;
-    enable: () => void;
-    disable: () => void;
-    onClick: (callback: () => void) => void;
-    offClick: (callback: () => void) => void;
-  };
-  BackButton: {
-    isVisible: boolean;
-    show: () => void;
-    hide: () => void;
-    onClick: (callback: () => void) => void;
-    offClick: (callback: () => void) => void;
-  };
-  HapticFeedback: {
-    impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
-    notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
-    selectionChanged: () => void;
-  };
+  MainButton: any;
+  BackButton: any;
+  HapticFeedback: any;
 }
 
 declare global {
@@ -71,33 +49,87 @@ export const telegram = {
   isReady: !!tg,
 };
 
-// ✅ Function to get Telegram user
-export const getTelegramUser = () => {
-  return telegram.user;
-};
+// ✅ Get Telegram user
+export const getTelegramUser = () => telegram.user;
 
-// ✅ Function for haptic feedback
+// ✅ Haptic Feedback
 export const hapticFeedback = (
   type: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' | 'success' | 'warning' | 'error' = 'light'
 ) => {
   if (!telegram.HapticFeedback) return;
-
-  if (type === 'success' || type === 'warning' || type === 'error') {
+  if (['success', 'warning', 'error'].includes(type)) {
     telegram.HapticFeedback.notificationOccurred(type);
   } else {
     telegram.HapticFeedback.impactOccurred(type);
   }
 };
 
-// ✅ NEW: Add showConfirm helper for confirmation dialogs
-export const showConfirm = (message: string, onConfirm?: () => void) => {
-  // For Telegram, we could later add custom UI; for now use native confirm()
-  if (window.confirm(message)) {
-    if (onConfirm) onConfirm();
-  }
+// ✅ Custom Telegram-style Alert
+export const showAlert = (message: string) => {
+  const existing = document.getElementById('telegram-alert');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'telegram-alert';
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100vw';
+  overlay.style.height = '100vh';
+  overlay.style.backgroundColor = 'rgba(0,0,0,0.4)';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.zIndex = '9999';
+  overlay.style.backdropFilter = 'blur(2px)';
+
+  const isDark = telegram.colorScheme === 'dark';
+  const theme = telegram.themeParams;
+
+  const box = document.createElement('div');
+  box.style.backgroundColor = theme.bg_color || (isDark ? '#1f1f1f' : '#fff');
+  box.style.color = theme.text_color || (isDark ? '#fff' : '#000');
+  box.style.padding = '20px 25px';
+  box.style.borderRadius = '16px';
+  box.style.maxWidth = '80%';
+  box.style.textAlign = 'center';
+  box.style.boxShadow = '0 4px 16px rgba(0,0,0,0.25)';
+  box.style.fontSize = '16px';
+  box.style.lineHeight = '1.5';
+  box.style.animation = 'fadeIn 0.2s ease-out';
+
+  const text = document.createElement('div');
+  text.innerText = message;
+
+  const btn = document.createElement('button');
+  btn.innerText = 'OK';
+  btn.style.marginTop = '16px';
+  btn.style.padding = '8px 18px';
+  btn.style.border = 'none';
+  btn.style.borderRadius = '10px';
+  btn.style.backgroundColor = theme.button_color || (isDark ? '#2481cc' : '#007aff');
+  btn.style.color = theme.button_text_color || '#fff';
+  btn.style.fontWeight = '500';
+  btn.style.cursor = 'pointer';
+  btn.style.transition = '0.2s';
+  btn.onclick = () => {
+    overlay.remove();
+    hapticFeedback('success');
+  };
+
+  box.appendChild(text);
+  box.appendChild(btn);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
 };
 
-// Initialize Telegram App when ready
+// ✅ Confirmation Popup
+export const showConfirm = (message: string, onConfirm?: () => void) => {
+  const confirmBox = confirm(message);
+  if (confirmBox && onConfirm) onConfirm();
+};
+
+// ✅ Initialize Telegram WebApp
 if (telegram.isReady) {
   telegram.ready();
   telegram.expand();
