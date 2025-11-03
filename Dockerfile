@@ -40,9 +40,8 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-# ✅ Copy build output (adjust path if needed)
-# If your build output is in client/dist, use that
-COPY --from=builder /app/client/dist ./client/dist
+# ✅ Correct build output path (Vite outputs to /app/dist/public)
+COPY --from=builder /app/dist/public ./public
 COPY --from=builder /app/server ./server
 COPY --from=builder /app/shared ./shared
 
@@ -52,5 +51,5 @@ USER nodejs
 
 EXPOSE 5000
 
-# ✅ Start the server (adjust if your entry is different)
+# ✅ Start the server
 CMD ["node", "server/index.js"]
