@@ -2,6 +2,7 @@ interface TelegramWebApp {
   ready: () => void;
   expand: () => void;
   close: () => void;
+  showAlert?: (message: string, callback?: () => void) => void;
   colorScheme: 'light' | 'dark';
   themeParams: {
     bg_color?: string;
@@ -68,25 +69,34 @@ export const telegram = {
   MainButton: tg?.MainButton,
   BackButton: tg?.BackButton,
   HapticFeedback: tg?.HapticFeedback,
+  showAlert: tg?.showAlert,
   isReady: !!tg,
 };
 
-// Export function to get Telegram user (used by Header.tsx and WelcomeCard.tsx)
+// ✅ Get Telegram user
 export const getTelegramUser = () => {
   return telegram.user;
 };
 
-// Export haptic feedback function (used by BottomNav.tsx, QuizCard.tsx, QuickActions.tsx)
+// ✅ Haptic feedback helper
 export const hapticFeedback = (
   type: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' | 'success' | 'warning' | 'error' = 'light'
 ) => {
   if (!telegram.HapticFeedback) return;
 
-  // Map feedback types to appropriate Telegram API calls
   if (type === 'success' || type === 'warning' || type === 'error') {
     telegram.HapticFeedback.notificationOccurred(type);
   } else {
     telegram.HapticFeedback.impactOccurred(type);
+  }
+};
+
+// ✅ Show alert helper (⚡ this fixes your build error)
+export const showAlert = (message: string) => {
+  if (telegram.showAlert) {
+    telegram.showAlert(message);
+  } else {
+    alert(message);
   }
 };
 
