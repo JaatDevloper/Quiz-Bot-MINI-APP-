@@ -8,34 +8,19 @@ WORKDIR /app
 # 2️⃣ Dependencies layer
 # ==========================
 FROM base AS deps
-WORKDIR /app
-
-# Copy only package files first (for caching)
 COPY package*.json ./
-
-# Install dependencies (includes devDeps for build)
 RUN npm ci --legacy-peer-deps
 
 # ==========================
-# 3️⃣ Build stage
+# 3️⃣ Build stage (Vite + TS)
 # ==========================
 FROM base AS builder
 WORKDIR /app
 
-# Copy node_modules from deps
 COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 
-# Copy source code
-COPY package*.json ./
-COPY client ./client
-COPY server ./server
-COPY shared ./shared
-COPY vite.config.ts ./
-COPY tailwind.config.ts ./
-COPY tsconfig.json ./
-COPY postcss.config.js ./
-
-# Run build with verbose logging for debugging
+# ✅ Build the frontend (verbose to see logs)
 RUN npm run build --verbose || (echo "❌ Build failed! Check the logs above." && exit 1)
 
 # ==========================
@@ -53,10 +38,13 @@ RUN addgroup --system --gid 1001 nodejs && \
 
 # Copy package files and install only production deps
 COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Copy built files from builder stage
-COPY --from=builder /app/dist ./dist
+# ✅ Copy build output (adjust path if needed)
+# If your build output is in client/dist, use that
+COPY --from=builder /app/client/dist ./client/dist
+COPY --from=builder /app/server ./server
+COPY --from=builder /app/shared ./shared
 
 # Fix permissions
 RUN chown -R nodejs:nodejs /app
@@ -64,5 +52,5 @@ USER nodejs
 
 EXPOSE 5000
 
-# Final startup command
-CMD ["node", "dist/index.js"]
+# ✅ Start the server (adjust if your entry is different)
+CMD ["node", "server/index.js"]
