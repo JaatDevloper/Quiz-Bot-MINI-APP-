@@ -12,7 +12,7 @@ COPY package*.json ./
 RUN npm ci --legacy-peer-deps
 
 # ==========================
-# 3️⃣ Build stage (Vite + TS)
+# 3️⃣ Build stage (Frontend + Backend)
 # ==========================
 FROM base AS builder
 WORKDIR /app
@@ -20,8 +20,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# ✅ Build the frontend (verbose to see logs)
-RUN npm run build --verbose || (echo "❌ Build failed! Check the logs above." && exit 1)
+# ✅ Build frontend (Vite)
+RUN npm run build --verbose || (echo "❌ Frontend build failed!" && exit 1)
+
+# ✅ Build backend (TypeScript → JavaScript)
+RUN npx tsc --project tsconfig.server.json || (echo "❌ Backend build failed!" && exit 1)
 
 # ==========================
 # 4️⃣ Production stage
@@ -40,9 +43,9 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-# ✅ Correct build output path (Vite outputs to /app/dist/public)
-COPY --from=builder /app/dist/public ./public
-COPY --from=builder /app/server ./server
+# ✅ Copy build outputs
+COPY --from=builder /app/client/dist ./client/dist
+COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/shared ./shared
 
 # Fix permissions
@@ -51,5 +54,5 @@ USER nodejs
 
 EXPOSE 5000
 
-# ✅ Start the server
-CMD ["node", "server/index.js"]
+# ✅ Start the compiled backend
+CMD ["node", "dist/server/index.js"]
